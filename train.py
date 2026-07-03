@@ -26,7 +26,7 @@ from config import (
     GRUConfig, TCNConfig, TransformerConfig,
     GRU_CFG, TCN_CFG, TRANSFORMER_CFG, OUTPUT_DIR,
 )
-from data_loader import load_dataset_splits, compute_class_weights, normalize_X
+from data_loader import load_dataset_splits, compute_class_weights, normalize_X, DATASET_PATH
 from algorithms.gru import GRUHandoverPolicy
 from algorithms.tcn import TCNHandoverPolicy
 from algorithms.transformer import TransformerHandoverPolicy
@@ -276,20 +276,33 @@ def main():
         "--epochs", type=int, default=None,
         help="训练轮数（覆盖配置文件）"
     )
+    parser.add_argument(
+        "--dataset", default=None,
+        help="数据集路径（默认使用 config 中的 DATASET_PATH）"
+    )
     args = parser.parse_args()
 
     save_dir = Path(args.outdir)
 
     # ---- 加载数据 ----
-    X_train, Y_train, X_val, Y_val, X_test, Y_test = load_dataset_splits()
+    dataset_path = Path(args.dataset) if args.dataset else None
+    X_train, Y_train, X_val, Y_val, X_test, Y_test = load_dataset_splits(dataset_path)
 
-    # ---- 归一化特征（使训练数据与推理时的 get_feature_matrix() 输出一致）----
-    print("\n归一化特征...")
+    # ---- 判断是否需要归一化 ----
+    # rebuild_dataset.py 生成的数据集已经归一化（特征来自 get_feature_matrix()）
+    # 原始 dataset.npz 未归一化，需要手动归一化
     num_cells = X_train.shape[2] // 10  # F = 10 * C
-    X_train = normalize_X(X_train, num_cells)
-    X_val = normalize_X(X_val, num_cells)
-    X_test = normalize_X(X_test, num_cells)
-    print(f"  归一化完成：RSRP 范围 [{X_train[..., :num_cells].min():.3f}, {X_train[..., :num_cells].max():.3f}]")
+    needs_norm = X_train[..., :num_cells].min() < -10.0  # 原始 RSRP 约 -155 dBm
+
+    if needs_norm:
+        print("\n归一化特征（原始 dataset.npz）...")
+        X_train = normalize_X(X_train, num_cells)
+        X_val = normalize_X(X_val, num_cells)
+        X_test = normalize_X(X_test, num_cells)
+        print(f"  归一化完成：RSRP 范围 [{X_train[..., :num_cells].min():.3f}, {X_train[..., :num_cells].max():.3f}]")
+    else:
+        print(f"\n特征已归一化（来自 rebuild_dataset.py），跳过归一化步骤")
+        print(f"  RSRP 范围 [{X_train[..., :num_cells].min():.3f}, {X_train[..., :num_cells].max():.3f}]")
 
     # ---- 配置模型 ----
     models_to_train = []
