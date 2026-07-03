@@ -26,7 +26,7 @@ from config import (
     GRUConfig, TCNConfig, TransformerConfig,
     GRU_CFG, TCN_CFG, TRANSFORMER_CFG, OUTPUT_DIR,
 )
-from data_loader import load_dataset_splits, compute_class_weights
+from data_loader import load_dataset_splits, compute_class_weights, normalize_X
 from algorithms.gru import GRUHandoverPolicy
 from algorithms.tcn import TCNHandoverPolicy
 from algorithms.transformer import TransformerHandoverPolicy
@@ -282,6 +282,14 @@ def main():
 
     # ---- 加载数据 ----
     X_train, Y_train, X_val, Y_val, X_test, Y_test = load_dataset_splits()
+
+    # ---- 归一化特征（使训练数据与推理时的 get_feature_matrix() 输出一致）----
+    print("\n归一化特征...")
+    num_cells = X_train.shape[2] // 10  # F = 10 * C
+    X_train = normalize_X(X_train, num_cells)
+    X_val = normalize_X(X_val, num_cells)
+    X_test = normalize_X(X_test, num_cells)
+    print(f"  归一化完成：RSRP 范围 [{X_train[..., :num_cells].min():.3f}, {X_train[..., :num_cells].max():.3f}]")
 
     # ---- 配置模型 ----
     models_to_train = []

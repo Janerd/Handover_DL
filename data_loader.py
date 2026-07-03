@@ -225,6 +225,74 @@ def load_dataset_splits(
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
+# =========================================================
+# 特征归一化（与 get_feature_matrix() 保持一致）
+# =========================================================
+
+# 归一化参数（与 channel.py 保持一致）
+NORM_PARAMS = {
+    "rsrp":    {"min": -140.0, "max": -40.0,  "mode": "minmax"},
+    "rsrq":    {"min": -30.0,  "max":  0.0,   "mode": "minmax"},
+    "sinr":    {"min": -20.0,  "max":  40.0,  "mode": "minmax"},
+    "doppler": {"scale": 500.0,               "mode": "scale"},   # [-1, 1]
+    "beam":    {"scale": 6.0,                 "mode": "scale01"}, # [0, 1]
+    "rsrp_diff": {"scale": 5.0,               "mode": "scale"},   # [-1, 1]
+    "beam_diff": {"scale": 6.0,               "mode": "scale"},   # [-1, 1]
+    "ds":      {"scale": 1e-6,                "mode": "scale01"}, # [0, 1]
+    "k":       {"scale": 30.0,                "mode": "scale01"}, # [0, 1]
+    "tau":     {"scale": 2e-6,                "mode": "scale01"}, # [0, 1]
+}
+
+
+def normalize_X(X: np.ndarray, num_cells: int = 7) -> np.ndarray:
+    """
+    对 dataset.npz 中的 X_raw 做归一化，使其与 get_feature_matrix() 输出一致。
+
+    参数：
+        X:         [N, W, F] 原始特征（物理量，未归一化）
+        num_cells: 基站数量
+
+    返回：
+        X_norm: [N, W, F] 归一化后的特征，范围 [0,1] 或 [-1,1]
+    """
+    C = num_cells
+    X_norm = X.copy().astype(np.float32)
+
+    # 特征组顺序（与 channel.py 的 build_feature_matrix 一致）
+    # [0:C]    RSRP_l3
+    # [C:2C]   RSRQ
+    # [2C:3C]  SINR
+    # [3C:4C]  Doppler
+    # [4C:5C]  BeamID
+    # [5C:6C]  RSRP_diff
+    # [6C:7C]  BeamID_diff
+    # [7C:8C]  DelaySpread
+    # [8C:9C]  K_factor
+    # [9C:10C] min_tau
+
+    def minmax(arr, vmin, vmax):
+        return np.clip((arr - vmin) / (vmax - vmin), 0.0, 1.0)
+
+    def scale_sym(arr, scale):
+        return np.clip(arr / scale, -1.0, 1.0)
+
+    def scale_pos(arr, scale):
+        return np.clip(arr / scale, 0.0, 1.0)
+
+    X_norm[..., 0*C:1*C] = minmax(X[..., 0*C:1*C], -140.0, -40.0)   # RSRP_l3
+    X_norm[..., 1*C:2*C] = minmax(X[..., 1*C:2*C], -30.0,   0.0)    # RSRQ
+    X_norm[..., 2*C:3*C] = minmax(X[..., 2*C:3*C], -20.0,  40.0)    # SINR
+    X_norm[..., 3*C:4*C] = scale_sym(X[..., 3*C:4*C], 500.0)        # Doppler
+    X_norm[..., 4*C:5*C] = scale_pos(X[..., 4*C:5*C], 6.0)          # BeamID
+    X_norm[..., 5*C:6*C] = scale_sym(X[..., 5*C:6*C], 5.0)          # RSRP_diff
+    X_norm[..., 6*C:7*C] = scale_sym(X[..., 6*C:7*C], 6.0)          # BeamID_diff
+    X_norm[..., 7*C:8*C] = scale_pos(X[..., 7*C:8*C], 1e-6)         # DelaySpread
+    X_norm[..., 8*C:9*C] = scale_pos(X[..., 8*C:9*C], 30.0)         # K_factor
+    X_norm[..., 9*C:10*C] = scale_pos(X[..., 9*C:10*C], 2e-6)       # min_tau
+
+    return X_norm
+
+
 def compute_class_weights(Y_train: np.ndarray, num_classes: int) -> np.ndarray:
     """
     计算类别权重（处理标签不均衡）

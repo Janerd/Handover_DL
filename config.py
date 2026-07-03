@@ -16,8 +16,10 @@ from typing import List, Optional
 # 路径配置
 # =========================================================
 
-# Sionna 仿真输出目录（家用电脑路径）
-SIONNA_OUTPUT_DIR = Path("C:/PC_Simu/Sionna/outputs")
+# Sionna 仿真输出目录（自动适配家用/公司电脑）
+_home_path = Path("C:/PC_Simu/Sionna/outputs")       # 家用电脑
+_work_path = Path("C:/Users/haojia/Sionna/outputs")  # 公司电脑
+SIONNA_OUTPUT_DIR = _home_path if _home_path.exists() else _work_path
 
 # 本项目输出目录
 OUTPUT_DIR = Path(__file__).parent / "outputs"
