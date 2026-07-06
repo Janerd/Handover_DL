@@ -1,125 +1,62 @@
 """
-config.py
-=========
-切换策略实验配置
-
-数据来源：C:/PC_Simu/Sionna/outputs/trajectory_data.npz
+config.py — 全局配置
 """
 
 from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
-
-# =========================================================
-# 路径配置
-# =========================================================
-
-# Sionna 仿真输出目录（自动适配家用/公司电脑）
-_home_path = Path("C:/PC_Simu/Sionna/outputs")       # 家用电脑
-_work_path = Path("C:/Users/haojia/Sionna/outputs")  # 公司电脑
-SIONNA_OUTPUT_DIR = _home_path if _home_path.exists() else _work_path
-
-# 本项目输出目录
-OUTPUT_DIR = Path(__file__).parent / "outputs"
+# 项目根目录（相对路径，无需修改）
+PROJECT_DIR = Path(__file__).parent
+DATA_DIR = PROJECT_DIR / "data"
+OUTPUT_DIR = PROJECT_DIR / "outputs"
 
 # 数据文件路径
-TRAJECTORY_DATA_PATH = SIONNA_OUTPUT_DIR / "trajectory_data.npz"
-DATASET_PATH = SIONNA_OUTPUT_DIR / "dataset.npz"
+TRAJECTORY_DATA_PATH = DATA_DIR / "trajectory_data.npz"
+DATASET_PATH = DATA_DIR / "dataset.npz"
+MODEL_DIR = OUTPUT_DIR / "models"
 
-
-# =========================================================
-# 数据配置
-# =========================================================
 
 @dataclass
 class DataConfig:
-    # 时隙时长 [s]
-    slot_duration: float = 0.04  # 40ms
+    """数据集参数"""
+    slot_duration: float = 0.04   # 时隙时长 [s]
+    window_size: int = 10          # 特征窗口（历史时隙数）
+    pred_horizon: int = 5          # 预测时域（时隙数）
+    num_cells: int = 7             # 基站数量
+    num_features: int = 70         # 特征维度（10 类 × 7 基站）
+    fc: float = 3.5e9             # 载波频率 [Hz]
 
-    # 特征窗口大小（历史时隙数）
-    window_size: int = 10
-
-    # 预测时域（未来时隙数）
-    pred_horizon: int = 5
-
-    # 基站数量
-    num_cells: int = 7
-
-    # 特征维度（10 类 × 7 基站）
-    num_features: int = 70
-
-    # 载波频率 [Hz]
-    fc: float = 3.5e9
-
-    # 特征索引（每类特征的起始索引，步长为 num_cells）
-    # [0:7]   RSRP_l3
-    # [7:14]  RSRQ
-    # [14:21] SINR
-    # [21:28] Doppler_est
-    # [28:35] BeamID_norm
-    # [35:42] RSRP_diff
-    # [42:49] BeamID_diff
-    # [49:56] DelaySpread_norm
-    # [56:63] K_factor_norm
-    # [63:70] min_tau_norm
-
-
-# =========================================================
-# A3 算法配置
-# =========================================================
 
 @dataclass
 class A3Config:
-    # 默认偏置 [dB]（每个邻区对可独立设置）
-    default_offset_db: float = 3.0
-
-    # 触发时间 [ms]
-    ttt_ms: float = 80.0
-
-    # 迟滞量 [dB]
-    hysteresis_db: float = 2.0
-
-    # 优化时的搜索范围 [dB]
-    offset_search_range: tuple = (-3.0, 9.0)
-
-    # 优化时的搜索步长 [dB]
-    offset_search_step: float = 0.5
-
-    # RLF 判定阈值：SINR 低于此值持续超过 rfl_duration_ms 判定为 RLF
-    rlf_sinr_threshold_db: float = -6.0
-    rlf_duration_ms: float = 200.0  # 200ms
-
-    # 优化目标权重
+    """A3 切换算法参数"""
+    default_offset_db: float = 3.0    # 默认偏置 [dB]
+    ttt_ms: float = 80.0              # 触发时间 [ms]
+    hysteresis_db: float = 2.0        # 迟滞量 [dB]
+    offset_search_range: tuple = (-3.0, 9.0)   # 优化搜索范围 [dB]
+    offset_search_step: float = 0.5            # 搜索步长 [dB]
+    rlf_sinr_threshold_db: float = -6.0        # RLF 判定 SINR 阈值 [dB]
+    rlf_duration_ms: float = 200.0             # RLF 判定持续时间 [ms]
     sinr_weight: float = 1.0
-    ho_count_penalty: float = 0.1   # 每次切换的惩罚（dB 等效）
-    rlf_penalty: float = 5.0        # 每次 RLF 的惩罚（dB 等效）
+    ho_count_penalty: float = 0.1
+    rlf_penalty: float = 5.0
 
-
-# =========================================================
-# 深度学习模型配置
-# =========================================================
 
 @dataclass
 class ModelConfig:
-    # 输入维度
-    input_size: int = 70       # num_features
-    seq_len: int = 10          # window_size
-    num_classes: int = 7       # num_cells
-
-    # 训练参数
+    """深度学习模型基础参数"""
+    input_size: int = 70
+    seq_len: int = 10
+    num_classes: int = 7
     batch_size: int = 512
     num_epochs: int = 50
     learning_rate: float = 1e-3
     weight_decay: float = 1e-4
-    patience: int = 10         # Early stopping patience
-
-    # 类别权重（处理标签不均衡）
+    patience: int = 10
     use_class_weights: bool = True
-
-    # 设备
-    device: str = "auto"       # "auto", "cuda", "cpu"
+    device: str = "auto"
 
 
 @dataclass
@@ -147,47 +84,22 @@ class TransformerConfig(ModelConfig):
     max_seq_len: int = 10
 
 
-# =========================================================
-# 切换执行配置
-# =========================================================
-
 @dataclass
 class HandoverConfig:
-    # DL 滑动窗口：连续 N 次预测同一邻区才执行切换
-    sliding_window_n: int = 3   # 3 × 40ms = 120ms，类似 TTT=80ms
-
-    # RLF 判定（与 A3Config 保持一致）
+    """切换执行参数"""
+    sliding_window_n: int = 3      # 滑动窗口长度（连续 N 次预测才切换）
     rlf_sinr_threshold_db: float = -6.0
     rlf_duration_ms: float = 200.0
+    ho_cooldown_slots: int = 5     # 切换冷却时间 [slots]
 
-    # 切换冷却时间（切换后多少 slots 内不再切换，防止乒乓）
-    ho_cooldown_slots: int = 5  # 5 × 40ms = 200ms
-
-
-# =========================================================
-# 评估配置
-# =========================================================
 
 @dataclass
 class EvalConfig:
-    # 评估指标
-    metrics: List[str] = field(default_factory=lambda: [
-        "mean_sinr_db",          # 平均 SINR [dB]
-        "p5_sinr_db",            # 5th percentile SINR [dB]
-        "ho_count",              # 切换次数
-        "rlf_count",             # RLF 次数
-        "ping_pong_rate",        # 乒乓率（1s 内来回切换）
-        "inference_time_us",     # 推理时延 [μs]（DL 模型）
-    ])
-
-    # 乒乓判定时间窗口 [slots]
-    ping_pong_window_slots: int = 25  # 25 × 40ms = 1s
+    """评估参数"""
+    ping_pong_window_slots: int = 25   # 乒乓判定时间窗口（25 slots = 1s）
 
 
-# =========================================================
-# 全局默认配置
-# =========================================================
-
+# 全局默认实例
 DATA_CFG = DataConfig()
 A3_CFG = A3Config()
 GRU_CFG = GRUConfig()
