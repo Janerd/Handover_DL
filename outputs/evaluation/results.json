@@ -1,0 +1,138 @@
+{
+  "A3 (optimized)": {
+    "mean_sinr_db": 9.137362480163574,
+    "p5_sinr_db": -26.07511329650879,
+    "mean_ho_count": 2.7916666666666665,
+    "total_rlf_count": 151,
+    "mean_ping_pong_rate": 0.005952380952380952,
+    "mean_inference_time_us": 0.0,
+    "by_speed": {
+      "30.000000000000004": {
+        "mean_sinr_db": 9.030168533325195,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 4.0,
+        "rlf_count": 90,
+        "ping_pong_rate": 0.0,
+        "num_trajs": 8
+      },
+      "60.00000000000001": {
+        "mean_sinr_db": 17.623504638671875,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 1.25,
+        "rlf_count": 30,
+        "ping_pong_rate": 0.0,
+        "num_trajs": 8
+      },
+      "120.00000000000001": {
+        "mean_sinr_db": -7.3971686363220215,
+        "p5_sinr_db": -29.45026206970215,
+        "mean_ho_count": 3.125,
+        "rlf_count": 31,
+        "ping_pong_rate": 0.017857142857142856,
+        "num_trajs": 8
+      }
+    }
+  },
+  "GRU": {
+    "mean_sinr_db": 9.06331729888916,
+    "p5_sinr_db": -26.07511329650879,
+    "mean_ho_count": 8.0,
+    "total_rlf_count": 162,
+    "mean_ping_pong_rate": 0.1671806203056203,
+    "mean_inference_time_us": 572.0839998684824,
+    "by_speed": {
+      "30.000000000000004": {
+        "mean_sinr_db": 8.895421028137207,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 14.0,
+        "rlf_count": 98,
+        "ping_pong_rate": 0.1797542735042735,
+        "num_trajs": 8
+      },
+      "60.00000000000001": {
+        "mean_sinr_db": 17.951534271240234,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 3.25,
+        "rlf_count": 30,
+        "ping_pong_rate": 0.19318181818181818,
+        "num_trajs": 8
+      },
+      "120.00000000000001": {
+        "mean_sinr_db": -8.032242774963379,
+        "p5_sinr_db": -31.221771240234375,
+        "mean_ho_count": 6.75,
+        "rlf_count": 34,
+        "ping_pong_rate": 0.12860576923076922,
+        "num_trajs": 8
+      }
+    }
+  },
+  "TCN": {
+    "mean_sinr_db": 9.23250675201416,
+    "p5_sinr_db": -26.07511329650879,
+    "mean_ho_count": 6.583333333333333,
+    "total_rlf_count": 160,
+    "mean_ping_pong_rate": 0.06086436711436712,
+    "mean_inference_time_us": 2283.7749985046685,
+    "by_speed": {
+      "30.000000000000004": {
+        "mean_sinr_db": 9.0746431350708,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 12.125,
+        "rlf_count": 97,
+        "ping_pong_rate": 0.0867330586080586,
+        "num_trajs": 8
+      },
+      "60.00000000000001": {
+        "mean_sinr_db": 17.92337989807129,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 2.125,
+        "rlf_count": 30,
+        "ping_pong_rate": 0.029513888888888888,
+        "num_trajs": 8
+      },
+      "120.00000000000001": {
+        "mean_sinr_db": -7.508695125579834,
+        "p5_sinr_db": -29.973587036132812,
+        "mean_ho_count": 5.5,
+        "rlf_count": 33,
+        "ping_pong_rate": 0.06634615384615385,
+        "num_trajs": 8
+      }
+    }
+  },
+  "Transformer": {
+    "mean_sinr_db": 9.35844612121582,
+    "p5_sinr_db": -26.07511329650879,
+    "mean_ho_count": 6.666666666666667,
+    "total_rlf_count": 153,
+    "mean_ping_pong_rate": 0.12307374338624337,
+    "mean_inference_time_us": 575.1309997867793,
+    "by_speed": {
+      "30.000000000000004": {
+        "mean_sinr_db": 9.224514961242676,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 12.0,
+        "rlf_count": 91,
+        "ping_pong_rate": 0.1497767857142857,
+        "num_trajs": 8
+      },
+      "60.00000000000001": {
+        "mean_sinr_db": 17.9937801361084,
+        "p5_sinr_db": -26.07511329650879,
+        "mean_ho_count": 2.5,
+        "rlf_count": 28,
+        "ping_pong_rate": 0.17083333333333334,
+        "num_trajs": 8
+      },
+      "120.00000000000001": {
+        "mean_sinr_db": -7.367410659790039,
+        "p5_sinr_db": -29.179790496826172,
+        "mean_ho_count": 5.5,
+        "rlf_count": 34,
+        "ping_pong_rate": 0.048611111111111105,
+        "num_trajs": 8
+      }
+    }
+  }
+}

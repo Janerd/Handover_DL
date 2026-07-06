@@ -31,24 +31,28 @@ class TCNBlock(nn.Module):
     """TCN 残差块：两层因果膨胀卷积 + 残差连接"""
     def __init__(self, in_ch, out_ch, kernel_size, dilation, dropout):
         super().__init__()
-        self.net = nn.Sequential(
-            CausalConv1d(in_ch, out_ch, kernel_size, dilation),
-            nn.BatchNorm1d(out_ch), nn.ReLU(), nn.Dropout(dropout),
-            CausalConv1d(out_ch, out_ch, kernel_size, dilation),
-            nn.BatchNorm1d(out_ch), nn.ReLU(), nn.Dropout(dropout),
-        )
+        self.conv1 = CausalConv1d(in_ch, out_ch, kernel_size, dilation)
+        self.bn1 = nn.BatchNorm1d(out_ch)
+        self.relu1 = nn.ReLU()
+        self.drop1 = nn.Dropout(dropout)
+        self.conv2 = CausalConv1d(out_ch, out_ch, kernel_size, dilation)
+        self.bn2 = nn.BatchNorm1d(out_ch)
+        self.relu2 = nn.ReLU()
+        self.drop2 = nn.Dropout(dropout)
         self.downsample = nn.Conv1d(in_ch, out_ch, 1) if in_ch != out_ch else None
-        self.relu = nn.ReLU()
+        self.relu_out = nn.ReLU()
 
     def forward(self, x):
+        out = self.drop1(self.relu1(self.bn1(self.conv1(x))))
+        out = self.drop2(self.relu2(self.bn2(self.conv2(out))))
         res = x if self.downsample is None else self.downsample(x)
-        return self.relu(self.net(x) + res)
+        return self.relu_out(out + res)
 
 
 class TCNModel(nn.Module):
     def __init__(self, cfg: TCNConfig):
         super().__init__()
-        self.proj = nn.Linear(cfg.input_size, cfg.num_channels[0])
+        self.input_proj = nn.Linear(cfg.input_size, cfg.num_channels[0])
         layers = []
         in_ch = cfg.num_channels[0]
         for i, out_ch in enumerate(cfg.num_channels):
@@ -61,8 +65,8 @@ class TCNModel(nn.Module):
         )
 
     def forward(self, x):
-        x = self.proj(x).transpose(1, 2)  # [B, C, T]
-        x = self.tcn(x)[:, :, -1]         # [B, C_last]
+        x = self.input_proj(x).transpose(1, 2)  # [B, C, T]
+        x = self.tcn(x)[:, :, -1]               # [B, C_last]
         return self.classifier(x)
 
 

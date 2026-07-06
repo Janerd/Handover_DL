@@ -35,17 +35,17 @@ class PositionalEncoding(nn.Module):
 class TransformerModel(nn.Module):
     def __init__(self, cfg: TransformerConfig):
         super().__init__()
-        self.proj = nn.Linear(cfg.input_size, cfg.d_model)
+        self.input_proj = nn.Linear(cfg.input_size, cfg.d_model)
         self.pos_enc = PositionalEncoding(cfg.d_model, cfg.max_seq_len + 1, cfg.dropout)
-        self.cls = nn.Parameter(torch.zeros(1, 1, cfg.d_model))
-        nn.init.trunc_normal_(self.cls, std=0.02)
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, cfg.d_model))
+        nn.init.trunc_normal_(self.cls_token, std=0.02)
 
         layer = nn.TransformerEncoderLayer(
             d_model=cfg.d_model, nhead=cfg.nhead,
             dim_feedforward=cfg.dim_feedforward,
             dropout=cfg.dropout, batch_first=True, norm_first=True,
         )
-        self.encoder = nn.TransformerEncoder(layer, num_layers=cfg.num_encoder_layers)
+        self.transformer = nn.TransformerEncoder(layer, num_layers=cfg.num_encoder_layers)
         self.classifier = nn.Sequential(
             nn.LayerNorm(cfg.d_model),
             nn.Dropout(cfg.dropout),
@@ -56,19 +56,19 @@ class TransformerModel(nn.Module):
 
     def _causal_mask(self, T: int, device) -> torch.Tensor:
         if self._mask is None or self._mask_len != T:
-            total = T + 1  # +1 for CLS
+            total = T + 1  # +1 for CLS token
             mask = torch.triu(torch.ones(total, total, dtype=torch.bool, device=device), diagonal=1)
-            mask[0, :] = False  # CLS 可以看到所有位置
+            mask[0, :] = False  # CLS token 可以看到所有位置
             self._mask = mask
             self._mask_len = T
         return self._mask.to(device)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         B, T, _ = x.shape
-        x = self.proj(x)
-        x = torch.cat([self.cls.expand(B, -1, -1), x], dim=1)
+        x = self.input_proj(x)
+        x = torch.cat([self.cls_token.expand(B, -1, -1), x], dim=1)
         x = self.pos_enc(x)
-        x = self.encoder(x, mask=self._causal_mask(T, x.device), is_causal=False)
+        x = self.transformer(x, mask=self._causal_mask(T, x.device), is_causal=False)
         return self.classifier(x[:, 0])
 
 
