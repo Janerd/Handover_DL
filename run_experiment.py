@@ -66,8 +66,10 @@ def main():
 
     dataset_name = f"dataset_benefit_h{args.horizon}_c{args.ho_cost:.1f}.npz"
     dataset_path = sionna_outputs / dataset_name
-    model_dir = project_dir / "outputs" / "models_benefit"
-    eval_dir = project_dir / "outputs" / "evaluation_benefit"
+    # 每个 ho_cost 使用独立的模型目录和评估目录，避免互相覆盖
+    exp_tag = f"benefit_h{args.horizon}_c{args.ho_cost:.1f}"
+    model_dir = project_dir / "outputs" / f"models_{exp_tag}"
+    eval_dir = project_dir / "outputs" / f"evaluation_{exp_tag}"
 
     print(f"\n实验配置：")
     print(f"  模式：{args.mode}")
